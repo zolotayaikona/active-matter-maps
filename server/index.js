@@ -72,10 +72,51 @@ const server = http.createServer(app);
 
 const wss = new WebSocketServer({ server, path: "/ws" });
 const rooms = new Map();
+// Ephemeral drawing shapes per room (channel). Dropped when the room empties.
+const roomDrawings = new Map();
 
 function roomOf(name) {
   if (!rooms.has(name)) rooms.set(name, new Map());
   return rooms.get(name);
+}
+
+function drawingsOf(name) {
+  if (!roomDrawings.has(name)) roomDrawings.set(name, []);
+  return roomDrawings.get(name);
+}
+
+const DRAW_TYPES = new Set(["pen", "line", "dash", "rect", "ellipse", "text"]);
+
+function sanitizeItem(item) {
+  if (!item || typeof item !== "object") return null;
+  const type = String(item.type || "");
+  if (!DRAW_TYPES.has(type)) return null;
+  const id = String(item.id || "").slice(0, 48);
+  if (!id) return null;
+  const out = {
+    id,
+    type,
+    color: String(item.color || "#ff3b30").slice(0, 16),
+    width: Math.max(1, Math.min(24, Number(item.width) || 4)),
+    angle: Number(item.angle) || 0,
+    mapId: String(item.mapId || "").slice(0, 40),
+  };
+  const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+  if (type === "pen") {
+    const pts = Array.isArray(item.pts) ? item.pts : [];
+    out.pts = pts.slice(0, 4000).map((p) => [Math.round(num(p && p[0])), Math.round(num(p && p[1]))]);
+  } else if (type === "text") {
+    out.x = num(item.x);
+    out.y = num(item.y);
+    out.text = String(item.text || "").slice(0, 200);
+    out.size = Math.max(8, Math.min(200, Number(item.size) || 40));
+  } else {
+    out.x1 = num(item.x1);
+    out.y1 = num(item.y1);
+    out.x2 = num(item.x2);
+    out.y2 = num(item.y2);
+  }
+  return out;
 }
 
 function send(ws, msg) {
@@ -124,19 +165,36 @@ wss.on("connection", (ws, req) => {
       client.state.avatar = String(msg.avatar || "").slice(0, 300);
       client.state.color = String(msg.color || "#7289da").slice(0, 16);
       send(ws, { type: "welcome", id, peers: peersPayload(room) });
+      send(ws, { type: "drawings", items: drawingsOf(roomName) });
       broadcast(room, { type: "peer-join", peer: client.state }, ws);
     } else if (msg.type === "state") {
       if (typeof msg.mapId === "string") client.state.mapId = msg.mapId.slice(0, 40);
       if (Number.isFinite(msg.fx)) client.state.fx = msg.fx;
       if (Number.isFinite(msg.fy)) client.state.fy = msg.fy;
       broadcast(room, { type: "peer-state", peer: client.state }, ws);
+    } else if (msg.type === "draw") {
+      const item = sanitizeItem(msg.item);
+      if (item) {
+        const list = drawingsOf(roomName);
+        const i = list.findIndex((d) => d.id === item.id);
+        if (i >= 0) list[i] = item;
+        else list.push(item);
+        if (list.length > 3000) list.splice(0, list.length - 3000);
+        broadcast(room, { type: "draw", item }, ws);
+      }
+    } else if (msg.type === "draw-clear") {
+      roomDrawings.set(roomName, []);
+      broadcast(room, { type: "draw-clear" });
     }
   });
 
   ws.on("close", () => {
     room.delete(id);
     broadcast(room, { type: "peer-left", id }, ws);
-    if (room.size === 0) rooms.delete(roomName);
+    if (room.size === 0) {
+      rooms.delete(roomName);
+      roomDrawings.delete(roomName);
+    }
   });
 });
 

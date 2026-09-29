@@ -450,12 +450,123 @@ a {
 }
 
 /* canvas marker / zone renderer */
-#canvas {
+#canvas,
+#draw-canvas {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   pointer-events: none;
+}
+
+/* drawing toolbar */
+.drawbar {
+  position: absolute;
+  left: calc(12px + env(safe-area-inset-left, 0px));
+  top: 12px;
+  z-index: 16;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 12px;
+  background: rgba(23, 26, 36, 0.92);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(6px);
+  max-width: 168px;
+}
+
+.drawbar .drow {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.drawbar .dgap {
+  width: 1px;
+  height: 18px;
+  background: var(--line);
+  margin: 0 2px;
+}
+
+.drawbar .dbtn,
+.drawbar .dw,
+.drawbar .ds {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+.drawbar .dw {
+  font-size: 16px;
+}
+
+.drawbar .dbtn:hover,
+.drawbar .dw:hover,
+.drawbar .ds:hover {
+  background: var(--bg-3);
+}
+
+.drawbar .dbtn.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.drawbar .dw.active,
+.drawbar .ds.active {
+  background: var(--bg-3);
+  border-color: var(--accent-2);
+  color: #fff;
+}
+
+.drawbar .dbtn.danger:hover,
+.drawbar .dbtn.armed {
+  background: #7f1d1d;
+  border-color: #ef4444;
+  color: #fff;
+}
+
+.drawbar .dsw {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  background: var(--c);
+  cursor: pointer;
+  padding: 0;
+}
+
+.drawbar .dsw.active {
+  border-color: #fff;
+  box-shadow: 0 0 0 2px var(--accent-2);
+}
+
+/* inline text tool input */
+.text-input {
+  position: absolute;
+  z-index: 25;
+  min-width: 60px;
+  max-width: 60%;
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--accent-2);
+  background: rgba(13, 15, 20, 0.92);
+  color: #fff;
+  outline: none;
+  font-family: "Segoe UI", system-ui, sans-serif;
 }
 
 .hitlayer,

@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Active Matter · Интерактивные карты</title>
-    <link rel="stylesheet" href="/styles.css?v=8" />
+    <link rel="stylesheet" href="/styles.css?v=11" />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23fa005a'/%3E%3Ctext x='16' y='22' font-size='16' font-family='Arial' font-weight='bold' text-anchor='middle' fill='white'%3EAM%3C/text%3E%3C/svg%3E" />
   </head>
   <body>
@@ -64,12 +64,48 @@
         <main id="stage">
           <div id="viewport">
             <canvas id="canvas"></canvas>
+            <canvas id="draw-canvas"></canvas>
             <div id="cursors"></div>
             <div id="zlabels" class="zlabels"></div>
             <div id="pinlayer" class="pinlayer"></div>
             <div id="hitlayer" class="hitlayer"></div>
             <div id="tooltip" class="tooltip" hidden></div>
           </div>
+
+          <div id="drawbar" class="drawbar">
+            <div class="drow">
+              <button class="dbtn active" data-tool="pan" title="Двигать карту">✋</button>
+              <button class="dbtn" data-tool="select" title="Выбрать / повернуть">⬉</button>
+              <button class="dbtn" data-tool="pen" title="Произвольная линия">✎</button>
+              <button class="dbtn" data-tool="line" title="Прямая">╱</button>
+              <button class="dbtn" data-tool="dash" title="Пунктирная прямая">┄</button>
+              <button class="dbtn" data-tool="rect" title="Прямоугольник">▭</button>
+              <button class="dbtn" data-tool="ellipse" title="Круг">◯</button>
+              <button class="dbtn" data-tool="text" title="Текст">T</button>
+            </div>
+            <div class="drow">
+              <button class="dsw active" data-color="#ff3b30" style="--c:#ff3b30" title="Красный"></button>
+              <button class="dsw" data-color="#ffcc00" style="--c:#ffcc00" title="Жёлтый"></button>
+              <button class="dsw" data-color="#34c759" style="--c:#34c759" title="Зелёный"></button>
+              <button class="dsw" data-color="#0a84ff" style="--c:#0a84ff" title="Синий"></button>
+              <button class="dsw" data-color="#ffffff" style="--c:#ffffff" title="Белый"></button>
+              <button class="dsw" data-color="#111111" style="--c:#111111" title="Чёрный"></button>
+            </div>
+            <div class="drow">
+              <button class="dw" data-width="2" title="Тонко">•</button>
+              <button class="dw active" data-width="4" title="Средне">•</button>
+              <button class="dw" data-width="7" title="Толсто">•</button>
+              <span class="dgap"></span>
+              <button class="ds" data-size="16" title="Текст S">S</button>
+              <button class="ds" data-size="24" title="Текст M">M</button>
+              <button class="ds active" data-size="40" title="Текст L">L</button>
+              <button class="ds" data-size="64" title="Текст XL">XL</button>
+              <span class="dgap"></span>
+              <button class="dbtn danger" data-act="clear" title="Очистить рисунки (для всех в канале)">🗑</button>
+            </div>
+          </div>
+
+          <input id="text-input" class="text-input" hidden placeholder="Текст…" />
 
           <div id="coord-readout" class="coord-readout">—</div>
 
@@ -89,6 +125,6 @@
 
     <div id="popup" class="popup" hidden></div>
 
-    <script type="module" src="/app.js?v=8"></script>
+    <script type="module" src="/app.js?v=11"></script>
   </body>
 </html>

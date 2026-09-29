@@ -12,6 +12,9 @@ const els = {
   viewport: document.getElementById("viewport"),
   markers: document.getElementById("markers"),
   canvas: document.getElementById("canvas"),
+  drawCanvas: document.getElementById("draw-canvas"),
+  drawbar: document.getElementById("drawbar"),
+  textInput: document.getElementById("text-input"),
   zlabels: document.getElementById("zlabels"),
   pinlayer: document.getElementById("pinlayer"),
   hitlayer: document.getElementById("hitlayer"),
@@ -98,6 +101,7 @@ function toast(msg, ms = 4200) {
  * Viewer: pan / zoom
  * ------------------------------------------------------------------ */
 const ctx = els.canvas.getContext("2d", { alpha: true });
+const dctx = els.drawCanvas.getContext("2d", { alpha: true });
 let dpr = 1;
 let canvasW = 0;
 let canvasH = 0;
@@ -134,6 +138,8 @@ function resizeCanvas() {
   canvasH = Math.max(1, Math.round(r.height));
   els.canvas.width = Math.round(canvasW * dpr);
   els.canvas.height = Math.round(canvasH * dpr);
+  els.drawCanvas.width = Math.round(canvasW * dpr);
+  els.drawCanvas.height = Math.round(canvasH * dpr);
   layerCanvas.width = Math.round((canvasW + 2 * LAYER_MARGIN) * dpr);
   layerCanvas.height = Math.round((canvasH + 2 * LAYER_MARGIN) * dpr);
   invalidateLayer();
@@ -329,9 +335,515 @@ function renderScreenOverlays() {
   }
 }
 
+/* ------------------------------------------------------------------ *
+ * Drawing / planning overlay (ephemeral, per channel room)
+ * ------------------------------------------------------------------ */
+let activeTool = "pan";
+let drawColor = "#ff3b30";
+let drawWidth = 4;
+let drawTextSize = 40;
+let drawings = [];          // committed shapes (synced via WebSocket)
+let drawingGesture = null;  // in-progress gesture
+let selection = [];         // selected shapes (move / scale / rotate)
+let marquee = null;         // in-progress marquee rect in world coords
+let hoverHandle = null;     // { id, x, y } handle under cursor (feedback)
+
+const uid = () => "d" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+function toWorld(clientX, clientY) {
+  const r = viewportRect();
+  return { x: (clientX - r.left - view.tx) / view.scale, y: (clientY - r.top - view.ty) / view.scale };
+}
+
+function newShape(tool, w) {
+  const base = { id: uid(), type: tool, color: drawColor, width: drawWidth, angle: 0, mapId: currentMap ? currentMap.id : "" };
+  if (tool === "pen") return { ...base, pts: [[w.x, w.y]] };
+  if (tool === "text") return { ...base, x: w.x, y: w.y, text: "", size: drawTextSize };
+  return { ...base, x1: w.x, y1: w.y, x2: w.x, y2: w.y };
+}
+
+function shapeCenter(s) {
+  if (s.type === "text") return { x: s.x, y: s.y };
+  if (s.type === "pen") {
+    let sx = 0, sy = 0;
+    for (const p of s.pts) { sx += p[0]; sy += p[1]; }
+    const n = Math.max(1, s.pts.length);
+    return { x: sx / n, y: sy / n };
+  }
+  return { x: (s.x1 + s.x2) / 2, y: (s.y1 + s.y2) / 2 };
+}
+
+/* --- selection geometry / transform (world coordinates) --- */
+function rotPt(x, y, cx, cy, a) {
+  if (!a) return [x, y];
+  const c = Math.cos(a), s = Math.sin(a), dx = x - cx, dy = y - cy;
+  return [cx + dx * c - dy * s, cy + dx * s + dy * c];
+}
+
+function shapeWorldCorners(s) {
+  if (s.type === "pen") return s.pts.map((p) => [p[0], p[1]]);
+  if (s.type === "text") {
+    const w = ((s.text || "").length * s.size * 0.58) / view.scale;
+    const h = (s.size * 1.3) / view.scale;
+    const a = s.angle || 0;
+    return [rotPt(s.x, s.y, s.x, s.y, a), rotPt(s.x + w, s.y, s.x, s.y, a), rotPt(s.x + w, s.y - h, s.x, s.y, a), rotPt(s.x, s.y - h, s.x, s.y, a)];
+  }
+  const cx = (s.x1 + s.x2) / 2, cy = (s.y1 + s.y2) / 2, a = s.angle || 0;
+  return [rotPt(s.x1, s.y1, cx, cy, a), rotPt(s.x2, s.y1, cx, cy, a), rotPt(s.x2, s.y2, cx, cy, a), rotPt(s.x1, s.y2, cx, cy, a)];
+}
+
+function selBBoxWorld() {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const s of selection) {
+    for (const [x, y] of shapeWorldCorners(s)) {
+      if (x < x0) x0 = x;
+      if (x > x1) x1 = x;
+      if (y < y0) y0 = y;
+      if (y > y1) y1 = y;
+    }
+  }
+  return isFinite(x0) ? { x0, y0, x1, y1 } : null;
+}
+
+function selHandles() {
+  const b = selBBoxWorld();
+  if (!b) return null;
+  const left = screenX(b.x0), right = screenX(b.x1);
+  const top = screenY(b.y0), bottom = screenY(b.y1);
+  const mx = (left + right) / 2, my = (top + bottom) / 2;
+  return {
+    bbox: { left, top, right, bottom },
+    center: { x: mx, y: my },
+    pts: {
+      rot: { id: "rot", x: mx, y: top - 26 },
+      nw: { id: "nw", x: left, y: top },
+      n: { id: "n", x: mx, y: top },
+      ne: { id: "ne", x: right, y: top },
+      e: { id: "e", x: right, y: my },
+      se: { id: "se", x: right, y: bottom },
+      s: { id: "s", x: mx, y: bottom },
+      sw: { id: "sw", x: left, y: bottom },
+      w: { id: "w", x: left, y: my },
+    },
+  };
+}
+
+function hitHandle(sx, sy, tol = 11) {
+  if (!selection.length) return null;
+  const h = selHandles();
+  if (!h) return null;
+  // dedicated rotate handle above the box
+  if (Math.hypot(sx - h.pts.rot.x, sy - h.pts.rot.y) <= tol + 4) return h.pts.rot;
+  const b = h.bbox;
+  // Photoshop-style: hovering just outside a corner rotates
+  const outside = sx < b.left || sx > b.right || sy < b.top || sy > b.bottom;
+  for (const k of ["nw", "ne", "se", "sw"]) {
+    const p = h.pts[k];
+    const d = Math.hypot(sx - p.x, sy - p.y);
+    if (d <= tol) {
+      if (outside && d > 4) return { id: "rot", x: p.x, y: p.y };
+      return p;
+    }
+  }
+  for (const k of ["n", "s", "e", "w"]) {
+    const p = h.pts[k];
+    if (Math.hypot(sx - p.x, sy - p.y) <= tol) return p;
+  }
+  return null;
+}
+
+function snapshotSelection() {
+  return selection.map((s) => ({ s, orig: JSON.parse(JSON.stringify(s)) }));
+}
+
+function applyMove(dx, dy, snaps) {
+  for (const { s, orig } of snaps) {
+    if (s.type === "pen") s.pts = orig.pts.map(([x, y]) => [x + dx, y + dy]);
+    else if (s.type === "text") { s.x = orig.x + dx; s.y = orig.y + dy; }
+    else { s.x1 = orig.x1 + dx; s.y1 = orig.y1 + dy; s.x2 = orig.x2 + dx; s.y2 = orig.y2 + dy; }
+  }
+}
+
+function applyScale(ax, ay, kx, ky, snaps) {
+  const kk = Math.sqrt(Math.abs(kx * ky)) || 1;
+  for (const { s, orig } of snaps) {
+    if (s.type === "pen") {
+      s.pts = orig.pts.map(([x, y]) => [ax + (x - ax) * kx, ay + (y - ay) * ky]);
+    } else if (s.type === "text") {
+      s.x = ax + (orig.x - ax) * kx;
+      s.y = ay + (orig.y - ay) * ky;
+      s.size = Math.max(8, Math.min(300, orig.size * kk));
+    } else {
+      s.x1 = ax + (orig.x1 - ax) * kx;
+      s.y1 = ay + (orig.y1 - ay) * ky;
+      s.x2 = ax + (orig.x2 - ax) * kx;
+      s.y2 = ay + (orig.y2 - ay) * ky;
+    }
+  }
+}
+
+function applyRotate(c, d, snaps) {
+  for (const { s, orig } of snaps) {
+    if (s.type === "pen") {
+      s.pts = orig.pts.map(([x, y]) => rotPt(x, y, c.x, c.y, d));
+      continue;
+    }
+    const oc = shapeCenter(orig);
+    const [ncx, ncy] = rotPt(oc.x, oc.y, c.x, c.y, d);
+    const dx = ncx - oc.x, dy = ncy - oc.y;
+    if (s.type === "text") { s.x = orig.x + dx; s.y = orig.y + dy; }
+    else { s.x1 = orig.x1 + dx; s.y1 = orig.y1 + dy; s.x2 = orig.x2 + dx; s.y2 = orig.y2 + dy; }
+    s.angle = (orig.angle || 0) + d;
+  }
+}
+
+const safeRatio = (a, b) => (Math.abs(b) < 1e-3 ? 1 : a / b);
+
+function drawShape(g, s) {
+  g.lineWidth = s.width;
+  g.lineCap = "round";
+  g.lineJoin = "round";
+  g.strokeStyle = s.color;
+  g.fillStyle = s.color;
+
+  if (s.type === "pen") {
+    if (s.pts.length < 2) return;
+    g.beginPath();
+    for (let i = 0; i < s.pts.length; i++) {
+      const x = screenX(s.pts[i][0]);
+      const y = screenY(s.pts[i][1]);
+      if (i === 0) g.moveTo(x, y);
+      else g.lineTo(x, y);
+    }
+    g.stroke();
+    return;
+  }
+
+  if (s.type === "text") {
+    if (!s.text) return;
+    const x = screenX(s.x);
+    const y = screenY(s.y);
+    g.save();
+    g.translate(x, y);
+    g.rotate(s.angle || 0);
+    g.font = `${s.size}px "Segoe UI", system-ui, sans-serif`;
+    g.textAlign = "left";
+    g.textBaseline = "alphabetic";
+    g.fillText(s.text, 0, 0);
+    g.restore();
+    return;
+  }
+
+  const x1 = screenX(s.x1), y1 = screenY(s.y1);
+  const x2 = screenX(s.x2), y2 = screenY(s.y2);
+  const cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
+  g.save();
+  g.translate(cx, cy);
+  g.rotate(s.angle || 0);
+  g.translate(-cx, -cy);
+  if (s.type === "line" || s.type === "dash") {
+    g.setLineDash(s.type === "dash" ? [14, 9] : []);
+    g.beginPath();
+    g.moveTo(x1, y1);
+    g.lineTo(x2, y2);
+    g.stroke();
+    g.setLineDash([]);
+  } else if (s.type === "rect") {
+    g.strokeRect(Math.min(x1, x2), Math.min(y1, y2), Math.abs(x2 - x1), Math.abs(y2 - y1));
+  } else if (s.type === "ellipse") {
+    g.beginPath();
+    g.ellipse(cx, cy, Math.abs(x2 - x1) / 2, Math.abs(y2 - y1) / 2, 0, 0, Math.PI * 2);
+    g.stroke();
+  }
+  g.restore();
+}
+
+function drawingsForMap() {
+  return drawings.filter((s) => !s.mapId || s.mapId === currentMap.id);
+}
+
+function renderDrawings() {
+  dctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  dctx.clearRect(0, 0, canvasW, canvasH);
+  if (!currentMap) return;
+  for (const s of drawingsForMap()) drawShape(dctx, s);
+  if (drawingGesture && drawingGesture.kind === "draw") drawShape(dctx, drawingGesture.shape);
+
+  // selection frame + handles (Photoshop / draw.io style)
+  const h = selection.length ? selHandles() : null;
+  if (h) {
+    dctx.strokeStyle = "rgba(10,132,255,0.95)";
+    dctx.lineWidth = 1.5;
+    dctx.setLineDash([5, 4]);
+    dctx.strokeRect(h.bbox.left, h.bbox.top, h.bbox.right - h.bbox.left, h.bbox.bottom - h.bbox.top);
+    dctx.setLineDash([]);
+    dctx.beginPath();
+    dctx.moveTo(h.pts.n.x, h.pts.n.y);
+    dctx.lineTo(h.pts.rot.x, h.pts.rot.y);
+    dctx.stroke();
+    for (const key of ["nw", "n", "ne", "e", "se", "s", "sw", "w"]) {
+      const p = h.pts[key];
+      dctx.beginPath();
+      dctx.rect(p.x - 4, p.y - 4, 8, 8);
+      dctx.fillStyle = "#fff";
+      dctx.fill();
+      dctx.strokeStyle = "#0a84ff";
+      dctx.lineWidth = 1.5;
+      dctx.stroke();
+    }
+    dctx.beginPath();
+    dctx.arc(h.pts.rot.x, h.pts.rot.y, 7, 0, Math.PI * 2);
+    dctx.fillStyle = "#0a84ff";
+    dctx.fill();
+    dctx.strokeStyle = "#fff";
+    dctx.lineWidth = 2;
+    dctx.stroke();
+  }
+
+  // marquee (rubber-band) selection
+  if (marquee) {
+    const x1 = screenX(marquee.x0), y1 = screenY(marquee.y0);
+    const x2 = screenX(marquee.x1), y2 = screenY(marquee.y1);
+    const rx = Math.min(x1, x2), ry = Math.min(y1, y2);
+    const rw = Math.abs(x2 - x1), rh = Math.abs(y2 - y1);
+    dctx.fillStyle = "rgba(10,132,255,0.12)";
+    dctx.fillRect(rx, ry, rw, rh);
+    dctx.strokeStyle = "rgba(10,132,255,0.95)";
+    dctx.lineWidth = 1.5;
+    dctx.setLineDash([5, 4]);
+    dctx.strokeRect(rx, ry, rw, rh);
+    dctx.setLineDash([]);
+  }
+
+  if (hoverHandle) {
+    dctx.beginPath();
+    dctx.arc(hoverHandle.x, hoverHandle.y, 9, 0, Math.PI * 2);
+    dctx.strokeStyle = "#ffcc00";
+    dctx.lineWidth = 2;
+    dctx.stroke();
+  }
+}
+
+/* distance from point to segment (screen space) */
+function distToSeg(px, py, x1, y1, x2, y2) {
+  const dx = x2 - x1, dy = y2 - y1;
+  const len2 = dx * dx + dy * dy || 1;
+  let t = ((px - x1) * dx + (py - y1) * dy) / len2;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy));
+}
+
+function hitShape(s, sx, sy, tol = 12) {
+  if (s.type === "text") {
+    const x = screenX(s.x), y = screenY(s.y);
+    const w = (s.text || "").length * s.size * 0.58 + 10;
+    const h = s.size * 1.25;
+    return sx >= x - 6 && sx <= x + w && sy >= y - h && sy <= y + 6;
+  }
+  if (s.type === "pen") {
+    for (const p of s.pts) {
+      if (Math.hypot(screenX(p[0]) - sx, screenY(p[1]) - sy) < tol + s.width) return true;
+    }
+    return false;
+  }
+  const x1 = screenX(s.x1), y1 = screenY(s.y1), x2 = screenX(s.x2), y2 = screenY(s.y2);
+  if (s.type === "line" || s.type === "dash") return distToSeg(sx, sy, x1, y1, x2, y2) < tol + s.width;
+  const minx = Math.min(x1, x2) - tol, maxx = Math.max(x1, x2) + tol;
+  const miny = Math.min(y1, y2) - tol, maxy = Math.max(y1, y2) + tol;
+  return sx >= minx && sx <= maxx && sy >= miny && sy <= maxy;
+}
+
+function shapeHitAt(sx, sy) {
+  const list = drawingsForMap();
+  for (let i = list.length - 1; i >= 0; i--) {
+    if (hitShape(list[i], sx, sy)) return list[i];
+  }
+  return null;
+}
+
+function finalizeMarquee() {
+  if (!marquee) return;
+  const small = Math.abs(marquee.x1 - marquee.x0) * view.scale < 4 && Math.abs(marquee.y1 - marquee.y0) * view.scale < 4;
+  if (small) {
+    selection = [];
+    const sx = screenX((marquee.x0 + marquee.x1) / 2);
+    const sy = screenY((marquee.y0 + marquee.y1) / 2);
+    const hit = shapeHitAt(sx, sy);
+    if (hit) selection = [hit];
+    marquee = null;
+    scheduleFlush();
+    return;
+  }
+  const mx0 = Math.min(marquee.x0, marquee.x1), mx1 = Math.max(marquee.x0, marquee.x1);
+  const my0 = Math.min(marquee.y0, marquee.y1), my1 = Math.max(marquee.y0, marquee.y1);
+  const picked = [];
+  for (const s of drawingsForMap()) {
+    const pts = shapeWorldCorners(s);
+    const xs = pts.map((p) => p[0]);
+    const ys = pts.map((p) => p[1]);
+    if (Math.max(...xs) >= mx0 && Math.min(...xs) <= mx1 && Math.max(...ys) >= my0 && Math.min(...ys) <= my1) {
+      picked.push(s);
+    }
+  }
+  selection = picked;
+  marquee = null;
+  scheduleFlush();
+}
+
+function updateDrawCursor(sx, sy) {
+  if (activeTool !== "select") {
+    if (hoverHandle) { hoverHandle = null; scheduleFlush(); }
+    return;
+  }
+  const hh = hitHandle(sx, sy);
+  if (hh !== hoverHandle) {
+    hoverHandle = hh;
+    scheduleFlush();
+  }
+  let cur = "default";
+  if (hh) {
+    if (hh.id === "rot") cur = "grab";
+    else if (hh.id === "nw" || hh.id === "se") cur = "nwse-resize";
+    else if (hh.id === "ne" || hh.id === "sw") cur = "nesw-resize";
+    else if (hh.id === "n" || hh.id === "s") cur = "ns-resize";
+    else cur = "ew-resize";
+  } else if (selection.length) {
+    const b = selHandles();
+    if (b && sx >= b.bbox.left - 2 && sx <= b.bbox.right + 2 && sy >= b.bbox.top - 2 && sy <= b.bbox.bottom + 2) cur = "move";
+  }
+  els.viewport.style.cursor = cur;
+}
+
+function commitShape(shape) {
+  if (!shape) return false;
+  if (shape.type === "pen") {
+    if (shape.pts.length < 2) return false;
+  } else if (shape.type !== "text") {
+    const d = Math.hypot(shape.x2 - shape.x1, shape.y2 - shape.y1) * view.scale;
+    if (d < 4) return false;
+  }
+  drawings.push(shape);
+  send({ type: "draw", item: shape });
+  scheduleFlush();
+  return true;
+}
+
+function upsertDrawing(item) {
+  if (!item || !item.id) return;
+  const i = drawings.findIndex((d) => d.id === item.id);
+  if (i >= 0) drawings[i] = item;
+  else drawings.push(item);
+  if (selection.length) selection = selection.map((s) => (s.id === item.id ? item : s));
+  scheduleFlush();
+}
+
+function clearDrawingsLocal() {
+  drawings = [];
+  selection = [];
+  marquee = null;
+  hoverHandle = null;
+  drawingGesture = null;
+  scheduleFlush();
+}
+
+function openTextInput(clientX, clientY) {
+  const inp = els.textInput;
+  const w = toWorld(clientX, clientY);
+  inp.hidden = false;
+  inp.value = "";
+  inp.style.left = `${clientX - viewportRect().left}px`;
+  inp.style.top = `${clientY - viewportRect().top - drawTextSize}px`;
+  inp.style.fontSize = `${drawTextSize}px`;
+  inp.dataset.wx = String(w.x);
+  inp.dataset.wy = String(w.y);
+  inp.focus();
+}
+
+function commitTextInput() {
+  const inp = els.textInput;
+  if (inp.hidden) return;
+  const text = inp.value.trim();
+  inp.hidden = true;
+  if (!text) return;
+  const shape = {
+    id: uid(),
+    type: "text",
+    color: drawColor,
+    width: drawWidth,
+    angle: 0,
+    mapId: currentMap ? currentMap.id : "",
+    x: Number(inp.dataset.wx) || 0,
+    y: Number(inp.dataset.wy) || 0,
+    text,
+    size: drawTextSize,
+  };
+  commitShape(shape);
+}
+
+els.textInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    commitTextInput();
+  } else if (e.key === "Escape") {
+    els.textInput.hidden = true;
+  }
+});
+els.textInput.addEventListener("blur", () => {
+  if (!els.textInput.hidden) commitTextInput();
+});
+
+/* drawing toolbar */
+let clearArmed = false;
+let clearTimer = null;
+function setTool(tool) {
+  activeTool = tool;
+  selection = [];
+  marquee = null;
+  hoverHandle = null;
+  drawingGesture = null;
+  els.drawbar.querySelectorAll(".dbtn[data-tool]").forEach((b) => b.classList.toggle("active", b.dataset.tool === tool));
+  els.viewport.style.cursor = tool === "pan" ? "" : tool === "select" ? "default" : "crosshair";
+  scheduleFlush();
+}
+
+els.drawbar.addEventListener("click", (e) => {
+  const btn = e.target.closest("button");
+  if (!btn) return;
+  if (btn.dataset.tool) {
+    setTool(btn.dataset.tool);
+  } else if (btn.dataset.color) {
+    drawColor = btn.dataset.color;
+    els.drawbar.querySelectorAll(".dsw").forEach((b) => b.classList.toggle("active", b === btn));
+  } else if (btn.dataset.width) {
+    drawWidth = Number(btn.dataset.width);
+    els.drawbar.querySelectorAll(".dw").forEach((b) => b.classList.toggle("active", b === btn));
+  } else if (btn.dataset.size) {
+    drawTextSize = Number(btn.dataset.size);
+    els.drawbar.querySelectorAll(".ds").forEach((b) => b.classList.toggle("active", b === btn));
+  } else if (btn.dataset.act === "clear") {
+    if (!clearArmed) {
+      clearArmed = true;
+      btn.classList.add("armed");
+      btn.title = "Нажми ещё раз для очистки";
+      clearTimeout(clearTimer);
+      clearTimer = setTimeout(() => {
+        clearArmed = false;
+        btn.classList.remove("armed");
+      }, 2500);
+      return;
+    }
+    clearArmed = false;
+    btn.classList.remove("armed");
+    clearDrawingsLocal();
+    send({ type: "draw-clear" });
+    toast("Рисунки очищены");
+  }
+});
+
 function flush() {
   rafPending = false;
   renderCanvas();
+  renderDrawings();
   renderScreenOverlays();
   if (popupAnchor) positionPopup();
   drawCursors();
@@ -438,13 +950,53 @@ let pinchStart = null;
 let downInfo = null;
 
 els.viewport.addEventListener("pointerdown", (e) => {
-  if (e.target.closest(".spin")) return;
+  if (e.target.closest(".spin") || e.target.closest(".drawbar") || e.target.closest(".text-input")) return;
   // cancel the default action so the browser never starts dragging the map image
   e.preventDefault();
   try {
     els.viewport.setPointerCapture(e.pointerId);
   } catch {}
   pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+  // Drawing tools take over the gesture when not panning.
+  if (pointers.size === 1 && activeTool !== "pan" && currentMap) {
+    const r = viewportRect();
+    const sx = e.clientX - r.left;
+    const sy = e.clientY - r.top;
+    panStart = null;
+    downInfo = { id: e.pointerId, x: e.clientX, y: e.clientY };
+    const startWorld = toWorld(e.clientX, e.clientY);
+
+    if (activeTool === "select") {
+      const hh = hitHandle(sx, sy);
+      if (hh) {
+        drawingGesture = {
+          kind: hh.id === "rot" ? "rotate" : "scale",
+          handle: hh.id,
+          startWorld,
+          snaps: snapshotSelection(),
+          bbox: selBBoxWorld(),
+        };
+        return;
+      }
+      if (selection.length) {
+        const b = selHandles();
+        if (b && sx >= b.bbox.left - 2 && sx <= b.bbox.right + 2 && sy >= b.bbox.top - 2 && sy <= b.bbox.bottom + 2) {
+          drawingGesture = { kind: "move", startWorld, snaps: snapshotSelection() };
+          return;
+        }
+      }
+      marquee = { x0: startWorld.x, y0: startWorld.y, x1: startWorld.x, y1: startWorld.y };
+      drawingGesture = { kind: "marquee" };
+      return;
+    }
+    if (activeTool === "text") return; // committed on tap
+
+    drawingGesture = { kind: "draw", shape: newShape(activeTool, startWorld) };
+    scheduleFlush();
+    return;
+  }
+
   downInfo = { id: e.pointerId, x: e.clientX, y: e.clientY };
 
   if (pointers.size === 1) {
@@ -453,6 +1005,7 @@ els.viewport.addEventListener("pointerdown", (e) => {
   } else {
     panStart = null;
     downInfo = null;
+    drawingGesture = null;
     if (pointers.size === 2) {
       const [a, b] = [...pointers.values()];
       pinchStart = {
@@ -474,6 +1027,36 @@ els.viewport.addEventListener("pointermove", (e) => {
   if (p) {
     p.x = e.clientX;
     p.y = e.clientY;
+  }
+
+  if (drawingGesture) {
+    const g = drawingGesture;
+    const w = toWorld(e.clientX, e.clientY);
+    if (g.kind === "draw") {
+      const s = g.shape;
+      if (s.type === "pen") s.pts.push([w.x, w.y]);
+      else if (s.type !== "text") { s.x2 = w.x; s.y2 = w.y; }
+    } else if (g.kind === "move") {
+      applyMove(w.x - g.startWorld.x, w.y - g.startWorld.y, g.snaps);
+    } else if (g.kind === "scale") {
+      const b = g.bbox;
+      const ax = g.handle.includes("w") ? b.x1 : g.handle.includes("e") ? b.x0 : (b.x0 + b.x1) / 2;
+      const ay = g.handle.includes("n") ? b.y1 : g.handle.includes("s") ? b.y0 : (b.y0 + b.y1) / 2;
+      const kx = g.handle.includes("w") || g.handle.includes("e") ? safeRatio(w.x - ax, g.startWorld.x - ax) : 1;
+      const ky = g.handle.includes("n") || g.handle.includes("s") ? safeRatio(w.y - ay, g.startWorld.y - ay) : 1;
+      applyScale(ax, ay, kx, ky, g.snaps);
+    } else if (g.kind === "rotate") {
+      const b = g.bbox;
+      const c = { x: (b.x0 + b.x1) / 2, y: (b.y0 + b.y1) / 2 };
+      const a0 = Math.atan2(g.startWorld.x - c.x, -(g.startWorld.y - c.y));
+      const a1 = Math.atan2(w.x - c.x, -(w.y - c.y));
+      applyRotate(c, a1 - a0, g.snaps);
+    } else if (g.kind === "marquee") {
+      marquee.x1 = w.x;
+      marquee.y1 = w.y;
+    }
+    scheduleFlush();
+    return;
   }
 
   if (pointers.size === 2 && pinchStart) {
@@ -500,7 +1083,10 @@ els.viewport.addEventListener("pointermove", (e) => {
 
   updateReadout(e);
   sendCursor(e);
-  if (pointers.size === 0) updateHover();
+  if (pointers.size === 0) {
+    if (activeTool === "pan") updateHover();
+    else updateDrawCursor(e.clientX - r.left, e.clientY - r.top);
+  }
 });
 
 function endPointer(e) {
@@ -523,13 +1109,34 @@ let lastTap = { t: 0, x: 0, y: 0 };
 els.viewport.addEventListener("pointerup", (e) => {
   const info = downInfo && downInfo.id === e.pointerId ? downInfo : null;
   downInfo = null;
+  const gesture = drawingGesture;
+  drawingGesture = null;
   endPointer(e);
+  if (gesture) {
+    if (gesture.kind === "draw") {
+      commitShape(gesture.shape);
+    } else if (gesture.kind === "marquee") {
+      finalizeMarquee();
+    } else if (gesture.kind === "move" || gesture.kind === "scale" || gesture.kind === "rotate") {
+      for (const { s } of gesture.snaps) send({ type: "draw", item: s });
+      scheduleFlush();
+    }
+    return;
+  }
   if (!info) return;
   const moved = Math.hypot(e.clientX - info.x, e.clientY - info.y);
   if (moved >= 6) return;
   const r = viewportRect();
   const sx = e.clientX - r.left;
   const sy = e.clientY - r.top;
+
+  if (activeTool === "select") return;
+  if (activeTool === "text") {
+    openTextInput(e.clientX, e.clientY);
+    return;
+  }
+  if (activeTool !== "pan") return;
+
   const hit = markerAt(sx, sy);
   if (hit) {
     lastTap.t = 0;
@@ -1210,6 +1817,15 @@ function connectPresence(room) {
       peers.delete(msg.id);
       renderPeers();
       drawCursors();
+    } else if (msg.type === "drawings") {
+      drawings = Array.isArray(msg.items) ? msg.items : [];
+      selection = [];
+      marquee = null;
+      scheduleFlush();
+    } else if (msg.type === "draw") {
+      upsertDrawing(msg.item);
+    } else if (msg.type === "draw-clear") {
+      clearDrawingsLocal();
     }
   });
   socket.addEventListener("close", () => {
@@ -1295,7 +1911,8 @@ async function initDiscord() {
       const auth = await sdk.commands.authenticate({ access_token: token.access_token });
       const u = auth.user;
       return {
-        room: sdk.instanceId,
+        // room = channel, so drawings/presence are unique per Discord channel
+        room: sdk.channelId || sdk.instanceId,
         user: {
           id: u.id,
           name: u.global_name || u.username || "Игрок",
@@ -1305,11 +1922,14 @@ async function initDiscord() {
       };
     }
     toast("Discord OAuth не настроен — гостевой режим.");
-    return { room: sdk.instanceId, user: null };
+    return { room: sdk.channelId || sdk.instanceId, user: null };
   } catch (err) {
     console.warn("Discord init failed:", err);
     toast(`Не удалось войти через Discord: ${err.message}. Демонстрационный режим.`, 6000);
-    return { room: params.get("instance_id") || params.get("room") || "local", user: null };
+    return {
+      room: params.get("channel_id") || params.get("instance_id") || params.get("room") || "local",
+      user: null,
+    };
   }
 }
 
