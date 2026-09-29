@@ -1,0 +1,14 @@
+node_modules
+.git
+.gitignore
+.env
+*.log
+.tunnel-url.txt
+
+# not needed in the image (only for local import tooling)
+data
+tools
+
+# local editor / os
+.DS_Store
+Thumbs.db

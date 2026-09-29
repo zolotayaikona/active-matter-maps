@@ -1,0 +1,33 @@
+﻿{
+    "mapImage": "Dogorsk map.png",
+    "pageCategories": [
+        "\u041a\u0430\u0440\u0442\u0430"
+    ],
+    "defaultSort": "",
+    "description": "",
+    "coordinateOrder": "xy",
+    "mapBounds": [
+        [
+            0,
+            0
+        ],
+        [
+            2048,
+            2048
+        ]
+    ],
+    "origin": "bottom-left",
+    "useMarkerClustering": true,
+    "categories": [
+        {
+            "id": "1",
+            "listId": 1,
+            "name": "General",
+            "color": "#fa005a",
+            "symbol": "",
+            "symbolColor": ""
+        }
+    ],
+    "markers": [],
+    "markerProgress": false
+}

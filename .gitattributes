@@ -1,0 +1,9 @@
+# normalize line endings to LF in the repository (Windows checkouts get CRLF)
+* text=auto
+
+# binaries
+*.webp binary
+*.png binary
+*.jpg binary
+*.ico binary
+*.exe binary

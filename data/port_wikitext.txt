@@ -1,0 +1,111 @@
+﻿{
+    "mapImage": "Port HD map 2.jpg",
+    "pageCategories": [
+        "\u041b\u043e\u043a\u0430\u0446\u0438\u044f"
+    ],
+    "defaultSort": "",
+    "description": "",
+    "coordinateOrder": "xy",
+    "mapBounds": [
+        [
+            0,
+            0
+        ],
+        [
+            3731,
+            3731
+        ]
+    ],
+    "origin": "bottom-left",
+    "useMarkerClustering": true,
+    "categories": [
+        {
+            "id": "1",
+            "listId": 1,
+            "name": "\u041d\u0430\u0432\u0438\u0433\u0430\u0446\u0438\u044f",
+            "color": "#fa005a",
+            "symbol": "",
+            "symbolColor": ""
+        },
+        {
+            "id": "2",
+            "listId": 2,
+            "name": "\u041f\u043e\u0440\u0442\u0430\u043b\u044b",
+            "color": "#fa005a",
+            "symbol": "",
+            "symbolColor": "",
+            "icon": "\u0424\u0430\u0439\u043b:Map icon portal.png"
+        }
+    ],
+    "markers": [
+        {
+            "categoryId": "2",
+            "position": [
+                1022.4764055957477,
+                2438.6345116171055
+            ],
+            "icon": "\u0424\u0430\u0439\u043b:Map icon exit.png",
+            "popup": {
+                "title": "\u0412\u044b\u0445\u043e\u0434",
+                "description": "",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "1"
+        },
+        {
+            "categoryId": "2",
+            "position": [
+                2772.329144999743,
+                2443.8039289995213
+            ],
+            "icon": "\u0424\u0430\u0439\u043b:Map icon exit.png",
+            "popup": {
+                "title": "\u0412\u044b\u0445\u043e\u0434",
+                "description": "",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "2"
+        },
+        {
+            "categoryId": "1",
+            "position": [
+                306,
+                1772
+            ],
+            "icon": "\u0424\u0430\u0439\u043b:Map icon move.png",
+            "popup": {
+                "title": "\u0414\u043e\u0440\u043e\u0433\u0430 \u043a \u0432\u0437\u043b\u0451\u0442\u043d\u043e\u0439 \u043f\u043e\u043b\u043e\u0441\u0435 \u0410\u044d\u0440\u043e\u043f\u043e\u0440\u0442\u0430",
+                "description": "",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "3"
+        },
+        {
+            "categoryId": "1",
+            "position": [
+                588,
+                952
+            ],
+            "icon": "\u0424\u0430\u0439\u043b:Map icon move.png",
+            "popup": {
+                "title": "\u0414\u043e\u0440\u043e\u0433\u0430 \u043a \u0410\u044d\u0440\u043e\u043f\u043e\u0440\u0442\u0443 \u0438 \u042d\u043f\u0438\u0446\u0435\u043d\u0442\u0440\u0443",
+                "description": "",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "4"
+        }
+    ],
+    "markerProgress": false
+}

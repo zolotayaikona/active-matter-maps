@@ -1,0 +1,17 @@
+# Blueprint для Render.com: https://render.com/docs/blueprint-spec
+# Создаёт бесплатный web-сервис с HTTPS-адресом вида https://<name>.onrender.com
+services:
+  - type: web
+    name: active-matter-maps
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/config
+    autoDeploy: true
+    envVars:
+      # Render сам передаёт PORT; наш сервер читает process.env.PORT
+      - key: DISCORD_CLIENT_ID
+        sync: false
+      - key: DISCORD_CLIENT_SECRET
+        sync: false

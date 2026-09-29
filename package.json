@@ -1,0 +1,23 @@
+{
+  "name": "active-matter-maps-activity",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Discord Activity with interactive maps for the game Active Matter",
+  "type": "module",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node server/index.js",
+    "convert": "node tools/convert-maps.mjs",
+    "import-amh": "node tools/import-amh.mjs",
+    "fetch-images": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/fetch-map-images.ps1",
+    "tunnel": "node tools/tunnel.mjs",
+    "discord:check": "node tools/discord-check.mjs"
+  },
+  "dependencies": {
+    "@discord/embedded-app-sdk": "^2.1.0",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "sharp": "^0.35.5",
+    "ws": "^8.18.0"
+  }
+}

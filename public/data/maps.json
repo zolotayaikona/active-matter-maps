@@ -1,0 +1,460 @@
+{
+  "generatedAt": "2026-09-27T18:07:34.879Z",
+  "source": "https://active-matter.fandom.com",
+  "attribution": "Карты и данные о точках интереса — Active Matter Wiki (CC-BY-SA)",
+  "maps": [
+    {
+      "id": "damba",
+      "name": "Дамба",
+      "image": "/maps/damba.webp",
+      "bounds": [
+        1024,
+        1024
+      ],
+      "width": 1024,
+      "height": 1024,
+      "origin": "bottom-left",
+      "coordinateOrder": "xy",
+      "categories": [
+        {
+          "id": "1",
+          "name": "General",
+          "color": "#fa005a",
+          "symbol": "●",
+          "icon": ""
+        }
+      ],
+      "markers": []
+    },
+    {
+      "id": "dogorsk",
+      "name": "Догорск",
+      "image": "/maps/dogorsk.webp",
+      "bounds": [
+        2048,
+        2048
+      ],
+      "width": 2048,
+      "height": 2048,
+      "origin": "bottom-left",
+      "coordinateOrder": "xy",
+      "categories": [
+        {
+          "id": "1",
+          "name": "General",
+          "color": "#fa005a",
+          "symbol": "●",
+          "icon": ""
+        }
+      ],
+      "markers": []
+    },
+    {
+      "id": "ozernoe",
+      "name": "Озёрное",
+      "image": "/maps/ozernoe.webp",
+      "bounds": [
+        1024,
+        1024
+      ],
+      "width": 1024,
+      "height": 1024,
+      "origin": "bottom-left",
+      "coordinateOrder": "xy",
+      "categories": [
+        {
+          "id": "1",
+          "name": "General",
+          "color": "#fa005a",
+          "symbol": "●",
+          "icon": ""
+        },
+        {
+          "id": "2",
+          "name": "Точки эвакуации",
+          "color": "#faa61a",
+          "symbol": "⇧",
+          "icon": ""
+        },
+        {
+          "id": "3",
+          "name": "Места аномальной активности",
+          "color": "#eb459e",
+          "symbol": "?",
+          "icon": ""
+        }
+      ],
+      "markers": [
+        {
+          "id": "1",
+          "categoryId": "2",
+          "x": 786.8001387694194,
+          "y": 804.2418955956091,
+          "title": "Экстракция",
+          "description": "",
+          "link": null,
+          "image": ""
+        },
+        {
+          "id": "2",
+          "categoryId": "2",
+          "x": 288.4995667241114,
+          "y": 758.0184694319789,
+          "title": "Экстракция",
+          "description": "",
+          "link": null,
+          "image": ""
+        },
+        {
+          "id": "3",
+          "categoryId": "2",
+          "x": 380.1575988740218,
+          "y": 327.4431514035764,
+          "title": "Экстракция",
+          "description": "",
+          "link": null,
+          "image": ""
+        },
+        {
+          "id": "4",
+          "categoryId": "2",
+          "x": 683.5,
+          "y": 85.75,
+          "title": "Экстракция",
+          "description": "",
+          "link": null,
+          "image": ""
+        },
+        {
+          "id": "5",
+          "categoryId": "3",
+          "x": 344.2536220971135,
+          "y": 167.26947182959327,
+          "title": "Точка интереса",
+          "description": "",
+          "link": null,
+          "image": ""
+        },
+        {
+          "id": "6",
+          "categoryId": "3",
+          "x": 478.0036220971135,
+          "y": 564.5121698934959,
+          "title": "Точка интереса",
+          "description": "",
+          "link": null,
+          "image": ""
+        },
+        {
+          "id": "7",
+          "categoryId": "3",
+          "x": 511.0036220971135,
+          "y": 253.0097359147967,
+          "title": "Точка интереса",
+          "description": "",
+          "link": null,
+          "image": ""
+        },
+        {
+          "id": "8",
+          "categoryId": "3",
+          "x": 210.00289767769084,
+          "y": 327.0085189254471,
+          "title": "Точка интереса",
+          "description": "",
+          "link": null,
+          "image": ""
+        },
+        {
+          "id": "9",
+          "categoryId": "3",
+          "x": 815.8898272346996,
+          "y": 582.4283802510519,
+          "title": "Точка интереса",
+          "description": "",
+          "link": null,
+          "image": ""
+        }
+      ]
+    },
+    {
+      "id": "port",
+      "name": "Порт",
+      "image": "/maps/port.webp",
+      "bounds": [
+        3731,
+        3731
+      ],
+      "width": 3731,
+      "height": 3731,
+      "origin": "bottom-left",
+      "coordinateOrder": "xy",
+      "categories": [
+        {
+          "id": "1",
+          "name": "Навигация",
+          "color": "#43b581",
+          "symbol": "➤",
+          "icon": ""
+        },
+        {
+          "id": "2",
+          "name": "Порталы",
+          "color": "#7289da",
+          "symbol": "◈",
+          "icon": ""
+        }
+      ],
+      "markers": [
+        {
+          "id": "1",
+          "categoryId": "2",
+          "x": 1022.4764055957477,
+          "y": 2438.6345116171055,
+          "title": "Выход",
+          "description": "",
+          "link": null,
+          "image": ""
+        },
+        {
+          "id": "2",
+          "categoryId": "2",
+          "x": 2772.329144999743,
+          "y": 2443.8039289995213,
+          "title": "Выход",
+          "description": "",
+          "link": null,
+          "image": ""
+        },
+        {
+          "id": "3",
+          "categoryId": "1",
+          "x": 306,
+          "y": 1772,
+          "title": "Дорога к взлётной полосе Аэропорта",
+          "description": "",
+          "link": null,
+          "image": ""
+        },
+        {
+          "id": "4",
+          "categoryId": "1",
+          "x": 588,
+          "y": 952,
+          "title": "Дорога к Аэропорту и Эпицентру",
+          "description": "",
+          "link": null,
+          "image": ""
+        }
+      ]
+    },
+    {
+      "id": "shchegolskoe",
+      "name": "Щегольское",
+      "image": "/maps/shchegolskoe.webp",
+      "bounds": [
+        1770,
+        1770
+      ],
+      "width": 1770,
+      "height": 1770,
+      "origin": "bottom-left",
+      "coordinateOrder": "xy",
+      "categories": [
+        {
+          "id": "1",
+          "name": "Навигация",
+          "color": "#43b581",
+          "symbol": "➤",
+          "icon": ""
+        },
+        {
+          "id": "2",
+          "name": "Порталы",
+          "color": "#7289da",
+          "symbol": "◈",
+          "icon": ""
+        },
+        {
+          "id": "3",
+          "name": "Места аномальной активности",
+          "color": "#eb459e",
+          "symbol": "?",
+          "icon": ""
+        }
+      ],
+      "markers": [
+        {
+          "id": "1",
+          "categoryId": "2",
+          "x": 567.0996385116111,
+          "y": 655.8415395505228,
+          "title": "Портал в дом №3",
+          "description": "Портал в парящий в аномалии дом №3. Портал двухсторонний. ",
+          "link": null,
+          "image": "/poi/map-schegolskoe-portal-9.webp"
+        },
+        {
+          "id": "2",
+          "categoryId": "2",
+          "x": 1170,
+          "y": 334,
+          "title": "Портал выхода",
+          "description": "Основной портал для выхода из рейда. Находится на вершине гравитационной аномалии.\nРаботает пока не закончится таймер рейда.",
+          "link": null,
+          "image": "/poi/map-schegolskoe-exit-1.webp"
+        },
+        {
+          "id": "3",
+          "categoryId": "1",
+          "x": 560.4722215136416,
+          "y": 1633.7009357883865,
+          "title": "Дорога к Озерному",
+          "description": "",
+          "link": null,
+          "image": ""
+        },
+        {
+          "id": "4",
+          "categoryId": "1",
+          "x": 60,
+          "y": 812,
+          "title": "Дорога в Догорск",
+          "description": "",
+          "link": null,
+          "image": ""
+        },
+        {
+          "id": "5",
+          "categoryId": "1",
+          "x": 1698,
+          "y": 838,
+          "title": "Дорога к Заводу",
+          "description": "",
+          "link": null,
+          "image": ""
+        },
+        {
+          "id": "6",
+          "categoryId": "2",
+          "x": 692,
+          "y": 903,
+          "title": "Портал в дом №6",
+          "description": "Портал в парящий в аномалии дом №6. Портал двухсторонний. ",
+          "link": null,
+          "image": "/poi/map-schegolskoe-portal-8.webp"
+        },
+        {
+          "id": "7",
+          "categoryId": "2",
+          "x": 846,
+          "y": 994,
+          "title": "Портал в дом №8",
+          "description": "Обратный портал в дом №8. Портал двухсторонний. ",
+          "link": null,
+          "image": ""
+        },
+        {
+          "id": "8",
+          "categoryId": "2",
+          "x": 1068,
+          "y": 994,
+          "title": "Портал в дом №9",
+          "description": "Обратный портал в дом №9. Портал двухсторонний.",
+          "link": null,
+          "image": ""
+        },
+        {
+          "id": "9",
+          "categoryId": "3",
+          "x": 824.7520242632194,
+          "y": 1233.6736077616138,
+          "title": "Точка интереса",
+          "description": "",
+          "link": null,
+          "image": ""
+        },
+        {
+          "id": "10",
+          "categoryId": "3",
+          "x": 918.0093564394463,
+          "y": 960.2811245397528,
+          "title": "Точка интереса",
+          "description": "",
+          "link": null,
+          "image": ""
+        },
+        {
+          "id": "11",
+          "categoryId": "3",
+          "x": 1385.74787121243,
+          "y": 631.2968796596745,
+          "title": "Точка интереса",
+          "description": "",
+          "link": null,
+          "image": ""
+        }
+      ]
+    },
+    {
+      "id": "dalnii",
+      "name": "Остров Дальний · секторы",
+      "image": "/maps/dalnii.webp",
+      "bounds": [
+        1024,
+        1024
+      ],
+      "width": 1024,
+      "height": 1024,
+      "origin": "bottom-left",
+      "coordinateOrder": "xy",
+      "categories": [],
+      "markers": []
+    },
+    {
+      "id": "ozernoe_sat",
+      "name": "Озёрное · спутник",
+      "image": "/maps/ozernoe_sat.webp",
+      "bounds": [
+        1024,
+        1024
+      ],
+      "width": 1024,
+      "height": 1024,
+      "origin": "bottom-left",
+      "coordinateOrder": "xy",
+      "categories": [],
+      "markers": []
+    },
+    {
+      "id": "dogorsk_plan",
+      "name": "Догорск · план",
+      "image": "/maps/dogorsk_plan.webp",
+      "bounds": [
+        632,
+        632
+      ],
+      "width": 632,
+      "height": 632,
+      "origin": "bottom-left",
+      "coordinateOrder": "xy",
+      "categories": [],
+      "markers": []
+    },
+    {
+      "id": "shchegolskoe_plan",
+      "name": "Щегольское · план",
+      "image": "/maps/shchegolskoe_plan.webp",
+      "bounds": [
+        496,
+        495
+      ],
+      "width": 496,
+      "height": 495,
+      "origin": "bottom-left",
+      "coordinateOrder": "xy",
+      "categories": [],
+      "markers": []
+    }
+  ]
+}

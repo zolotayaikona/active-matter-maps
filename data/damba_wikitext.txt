@@ -1,0 +1,31 @@
+﻿{
+    "mapImage": "Damba.png",
+    "pageCategories": [],
+    "defaultSort": "",
+    "description": "",
+    "coordinateOrder": "xy",
+    "mapBounds": [
+        [
+            0,
+            0
+        ],
+        [
+            1024,
+            1024
+        ]
+    ],
+    "origin": "bottom-left",
+    "useMarkerClustering": true,
+    "categories": [
+        {
+            "id": "1",
+            "listId": 1,
+            "name": "General",
+            "color": "#fa005a",
+            "symbol": "",
+            "symbolColor": ""
+        }
+    ],
+    "markers": [],
+    "markerProgress": false
+}

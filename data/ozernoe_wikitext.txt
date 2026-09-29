@@ -1,0 +1,205 @@
+﻿{
+    "mapImage": "Ozernoe map.png",
+    "pageCategories": [
+        "\u041a\u0430\u0440\u0442\u0430"
+    ],
+    "defaultSort": "",
+    "description": "",
+    "coordinateOrder": "xy",
+    "mapBounds": [
+        [
+            0,
+            0
+        ],
+        [
+            1024,
+            1024
+        ]
+    ],
+    "origin": "bottom-left",
+    "useMarkerClustering": true,
+    "categories": [
+        {
+            "id": "1",
+            "listId": 1,
+            "name": "General",
+            "color": "#fa005a",
+            "symbol": "",
+            "symbolColor": ""
+        },
+        {
+            "id": "2",
+            "listId": 2,
+            "name": "\u0422\u043e\u0447\u043a\u0438 \u044d\u0432\u0430\u043a\u0443\u0430\u0446\u0438\u0438",
+            "color": "#fa005a",
+            "symbol": "",
+            "symbolColor": "",
+            "icon": "\u0424\u0430\u0439\u043b:Extraction point icon.png"
+        },
+        {
+            "id": "3",
+            "listId": 3,
+            "name": "\u041c\u0435\u0441\u0442\u0430 \u0430\u043d\u043e\u043c\u0430\u043b\u044c\u043d\u043e\u0439 \u0430\u043a\u0442\u0438\u0432\u043d\u043e\u0441\u0442\u0438",
+            "color": "#fa005a",
+            "symbol": "",
+            "symbolColor": "",
+            "icon": "\u0424\u0430\u0439\u043b:Question.png"
+        }
+    ],
+    "markers": [
+        {
+            "categoryId": "2",
+            "position": [
+                786.8001387694194,
+                804.2418955956091
+            ],
+            "icon": "\u0424\u0430\u0439\u043b:Extraction point icon.png",
+            "popup": {
+                "title": "\u042d\u043a\u0441\u0442\u0440\u0430\u043a\u0446\u0438\u044f",
+                "description": "",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "1"
+        },
+        {
+            "categoryId": "2",
+            "position": [
+                288.4995667241114,
+                758.0184694319789
+            ],
+            "icon": "\u0424\u0430\u0439\u043b:Extraction point icon.png",
+            "popup": {
+                "title": "\u042d\u043a\u0441\u0442\u0440\u0430\u043a\u0446\u0438\u044f",
+                "description": "",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "2"
+        },
+        {
+            "categoryId": "2",
+            "position": [
+                380.1575988740218,
+                327.4431514035764
+            ],
+            "icon": "\u0424\u0430\u0439\u043b:Extraction point icon.png",
+            "popup": {
+                "title": "\u042d\u043a\u0441\u0442\u0440\u0430\u043a\u0446\u0438\u044f",
+                "description": "",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "3"
+        },
+        {
+            "categoryId": "2",
+            "position": [
+                683.5,
+                85.75
+            ],
+            "icon": "\u0424\u0430\u0439\u043b:Extraction point icon.png",
+            "popup": {
+                "title": "\u042d\u043a\u0441\u0442\u0440\u0430\u043a\u0446\u0438\u044f",
+                "description": "",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "4"
+        },
+        {
+            "categoryId": "3",
+            "position": [
+                344.2536220971135,
+                167.26947182959327
+            ],
+            "icon": "\u0424\u0430\u0439\u043b:Question.png",
+            "popup": {
+                "title": "\u0422\u043e\u0447\u043a\u0430 \u0438\u043d\u0442\u0435\u0440\u0435\u0441\u0430",
+                "description": "",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "5"
+        },
+        {
+            "categoryId": "3",
+            "position": [
+                478.0036220971135,
+                564.5121698934959
+            ],
+            "icon": "\u0424\u0430\u0439\u043b:Question.png",
+            "popup": {
+                "title": "\u0422\u043e\u0447\u043a\u0430 \u0438\u043d\u0442\u0435\u0440\u0435\u0441\u0430",
+                "description": "",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "6"
+        },
+        {
+            "categoryId": "3",
+            "position": [
+                511.0036220971135,
+                253.0097359147967
+            ],
+            "icon": "\u0424\u0430\u0439\u043b:Question.png",
+            "popup": {
+                "title": "\u0422\u043e\u0447\u043a\u0430 \u0438\u043d\u0442\u0435\u0440\u0435\u0441\u0430",
+                "description": "",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "7"
+        },
+        {
+            "categoryId": "3",
+            "position": [
+                210.00289767769084,
+                327.0085189254471
+            ],
+            "icon": "\u0424\u0430\u0439\u043b:Question.png",
+            "popup": {
+                "title": "\u0422\u043e\u0447\u043a\u0430 \u0438\u043d\u0442\u0435\u0440\u0435\u0441\u0430",
+                "description": "",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "8"
+        },
+        {
+            "categoryId": "3",
+            "position": [
+                815.8898272346996,
+                582.4283802510519
+            ],
+            "icon": "\u0424\u0430\u0439\u043b:\u0418\u0437\u043e\u0431\u0440\u0430\u0436\u0435\u043d\u0438\u0435 2026-04-13 071811214.png",
+            "popup": {
+                "title": "\u0422\u043e\u0447\u043a\u0430 \u0438\u043d\u0442\u0435\u0440\u0435\u0441\u0430",
+                "description": "",
+                "link": {
+                    "url": "",
+                    "label": ""
+                }
+            },
+            "id": "9"
+        }
+    ],
+    "markerProgress": false
+}
