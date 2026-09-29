@@ -1097,6 +1097,14 @@ function toggleFullscreen() {
 els.menuBtn.addEventListener("click", () => els.sidebar.classList.toggle("open"));
 els.viewport.addEventListener("pointerdown", () => els.sidebar.classList.remove("open"));
 
+/* Disable native HTML5 drag (image dragging) so panning always works */
+document.addEventListener("dragstart", (e) => e.preventDefault(), true);
+document.addEventListener("dragover", (e) => e.preventDefault(), true);
+document.addEventListener("drop", (e) => e.preventDefault(), true);
+els.image.draggable = false;
+els.world.draggable = false;
+els.image.setAttribute("draggable", "false");
+
 window.addEventListener("resize", () => {
   measureViewport();
   if (!currentMap) return;
