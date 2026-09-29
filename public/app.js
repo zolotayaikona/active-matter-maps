@@ -437,6 +437,8 @@ let downInfo = null;
 
 els.viewport.addEventListener("pointerdown", (e) => {
   if (e.target.closest(".spin")) return;
+  // cancel the default action so the browser never starts dragging the map image
+  e.preventDefault();
   try {
     els.viewport.setPointerCapture(e.pointerId);
   } catch {}
@@ -513,7 +515,9 @@ function endPointer(e) {
   if (pointers.size < 2) pinchStart = null;
 }
 
-/* tap / click: pick nearest marker, otherwise close the popup */
+/* tap / click: pick nearest marker; double-tap zooms (native dblclick is
+ * suppressed by pointerdown.preventDefault, so we detect it manually). */
+let lastTap = { t: 0, x: 0, y: 0 };
 els.viewport.addEventListener("pointerup", (e) => {
   const info = downInfo && downInfo.id === e.pointerId ? downInfo : null;
   downInfo = null;
@@ -522,9 +526,22 @@ els.viewport.addEventListener("pointerup", (e) => {
   const moved = Math.hypot(e.clientX - info.x, e.clientY - info.y);
   if (moved >= 6) return;
   const r = viewportRect();
-  const hit = markerAt(e.clientX - r.left, e.clientY - r.top);
-  if (hit) selectMarker(hit.id, false);
-  else closePopup();
+  const sx = e.clientX - r.left;
+  const sy = e.clientY - r.top;
+  const hit = markerAt(sx, sy);
+  if (hit) {
+    lastTap.t = 0;
+    selectMarker(hit.id, false);
+    return;
+  }
+  const now = performance.now();
+  if (now - lastTap.t < 320 && Math.hypot(sx - lastTap.x, sy - lastTap.y) < 24) {
+    lastTap.t = 0;
+    zoomAt(sx, sy, 1.8);
+    return;
+  }
+  lastTap = { t: now, x: sx, y: sy };
+  closePopup();
 });
 els.viewport.addEventListener("pointercancel", endPointer);
 els.viewport.addEventListener("pointerleave", () => {
@@ -549,11 +566,7 @@ els.viewport.addEventListener(
   { passive: false }
 );
 
-els.viewport.addEventListener("dblclick", (e) => {
-  if (e.target.closest(".pin")) return;
-  const r = viewportRect();
-  zoomAt(e.clientX - r.left, e.clientY - r.top, 1.8);
-});
+
 
 /* ------------------------------------------------------------------ *
  * Coordinate readout
@@ -1097,13 +1110,18 @@ function toggleFullscreen() {
 els.menuBtn.addEventListener("click", () => els.sidebar.classList.toggle("open"));
 els.viewport.addEventListener("pointerdown", () => els.sidebar.classList.remove("open"));
 
-/* Disable native HTML5 drag (image dragging) so panning always works */
-document.addEventListener("dragstart", (e) => e.preventDefault(), true);
-document.addEventListener("dragover", (e) => e.preventDefault(), true);
-document.addEventListener("drop", (e) => e.preventDefault(), true);
+/* Disable native HTML5 drag / selection so panning always works (incl. Discord) */
+for (const ev of ["dragstart", "dragover", "drop", "selectstart"]) {
+  window.addEventListener(ev, (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, true);
+}
+els.viewport.addEventListener("mousedown", (e) => e.preventDefault());
 els.image.draggable = false;
 els.world.draggable = false;
 els.image.setAttribute("draggable", "false");
+els.image.addEventListener("dragstart", (e) => e.preventDefault());
 
 window.addEventListener("resize", () => {
   measureViewport();
