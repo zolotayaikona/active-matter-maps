@@ -28,6 +28,9 @@ body {
   background: var(--bg);
   color: var(--text);
   overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-app-region: no-drag;
 }
 
 a {
@@ -388,6 +391,7 @@ a {
   min-width: 0;
   overflow: hidden;
   background: radial-gradient(circle at 30% 20%, #14182a, #0a0c12 70%);
+  -webkit-app-region: no-drag;
 }
 
 #viewport {

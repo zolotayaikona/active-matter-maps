@@ -10,8 +10,6 @@ const els = {
   search: document.getElementById("search"),
   results: document.getElementById("results"),
   viewport: document.getElementById("viewport"),
-  world: document.getElementById("world"),
-  image: document.getElementById("map-image"),
   markers: document.getElementById("markers"),
   canvas: document.getElementById("canvas"),
   zlabels: document.getElementById("zlabels"),
@@ -41,6 +39,7 @@ const view = { scale: 1, tx: 0, ty: 0, fit: 1, min: 0.1, max: 8 };
 let currentMap = null;
 let worldW = 0;
 let worldH = 0;
+let mapImg = null; // map bitmap, drawn on canvas (never an <img> in the DOM)
 let pendingSelect = null;
 let selected = null;
 let popupAnchor = null;
@@ -243,6 +242,11 @@ function renderLayer() {
   benchDrawn = 0;
   lctx.setTransform(dpr, 0, 0, dpr, LAYER_MARGIN * dpr, LAYER_MARGIN * dpr);
   lctx.clearRect(-LAYER_MARGIN, -LAYER_MARGIN, canvasW + 2 * LAYER_MARGIN, canvasH + 2 * LAYER_MARGIN);
+  // map bitmap (drawn on canvas so there is no draggable <img> in the DOM)
+  if (mapImg && mapImg.naturalWidth) {
+    lctx.imageSmoothingEnabled = true;
+    lctx.drawImage(mapImg, view.tx, view.ty, worldW * view.scale, worldH * view.scale);
+  }
   paintVectors(lctx, LAYER_MARGIN);
   layerView.scale = view.scale;
   layerView.tx = view.tx;
@@ -327,8 +331,6 @@ function renderScreenOverlays() {
 
 function flush() {
   rafPending = false;
-  const { scale, tx, ty } = view;
-  els.world.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
   renderCanvas();
   renderScreenOverlays();
   if (popupAnchor) positionPopup();
@@ -1048,13 +1050,10 @@ function setMap(id) {
   els.maplist.querySelectorAll("button").forEach((b) => b.classList.toggle("active", b.dataset.id === id));
   els.loading.hidden = false;
   els.loading.classList.remove("done");
-  els.image.src = map.image;
 
   const onReady = () => {
-    worldW = els.image.naturalWidth || map.width;
-    worldH = els.image.naturalHeight || map.height;
-    els.world.style.width = `${worldW}px`;
-    els.world.style.height = `${worldH}px`;
+    worldW = mapImg.naturalWidth || map.width;
+    worldH = mapImg.naturalHeight || map.height;
     resizeCanvas();
     prepareMap();
     renderLayers();
@@ -1077,12 +1076,14 @@ function setMap(id) {
     sendPresence({ mapId: map.id });
   };
 
-  els.image.onerror = () => {
+  if (!mapImg) mapImg = new Image();
+  mapImg.onerror = () => {
     els.loading.hidden = false;
     els.loading.textContent = "Не удалось загрузить изображение карты";
   };
-  if (els.image.complete && els.image.naturalWidth) onReady();
-  else els.image.onload = onReady;
+  mapImg.src = map.image;
+  if (mapImg.complete && mapImg.naturalWidth) onReady();
+  else mapImg.onload = onReady;
 }
 
 /* ------------------------------------------------------------------ *
@@ -1118,10 +1119,6 @@ for (const ev of ["dragstart", "dragover", "drop", "selectstart"]) {
   }, true);
 }
 els.viewport.addEventListener("mousedown", (e) => e.preventDefault());
-els.image.draggable = false;
-els.world.draggable = false;
-els.image.setAttribute("draggable", "false");
-els.image.addEventListener("dragstart", (e) => e.preventDefault());
 
 window.addEventListener("resize", () => {
   measureViewport();
